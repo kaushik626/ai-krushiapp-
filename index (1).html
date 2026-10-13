@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>કૃષિમિત્ર AI - સાચો પાક, સાચો સમય, સારું વળતર</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#087f23">
+    <!-- Chart.js Library CDN Link for clean data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #087f23;
+            --primary-dark: #06661c;
+            --bg-light: #f3f8f1;
+            --text-dark: #17351d;
+            --card-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        header h1 {
+            margin: 0;
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 15px;
+        }
+        .offline-tag {
+            background-color: #ffebee;
+            color: #c62828;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: bold;
+        }
+        .hero {
+            background: linear-gradient(135deg, #087f23 0%, #1b5e20 100%);
+            color: white;
+            padding: 25px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: var(--card-shadow);
+        }
+        .hero h2 { margin: 0 0 10px 0; font-size: 24px; }
+        .hero p { margin: 0; opacity: 0.9; font-size: 15px; line-height: 1.5; }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .dash-card {
+            background: white;
+            padding: 12px;
+            border-radius: 10px;
+            box-shadow: var(--card-shadow);
+            text-align: center;
+        }
+        .dash-card .value { font-size: 18px; font-weight: bold; color: var(--primary); margin-top: 5px; }
+        
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 20px;
+        }
+        .card h2 {
+            margin-top: 0;
+            color: var(--primary);
+            font-size: 18px;
+            border-bottom: 2px solid #e8f5e9;
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 6px;
+            font-size: 14px;
+        }
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cccccc;
+            border-radius: 8px;
+            background-color: #fafafa;
+            font-size: 15px;
+            color: var(--text-dark);
+            outline: none;
+        }
+        select:focus {
+            border-color: var(--primary);
+        }
+        
+        .radio-group {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+        .radio-btn {
+            border: 1px solid #cccccc;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            background: #fafafa;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .radio-btn.active {
+            background: #e8f5e9;
+            border-color: var(--primary);
+            color: var(--primary-dark);
+            font-weight: bold;
+        }
+        
+        .btn-submit {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(8,127,35,0.2);
+            transition: background 0.2s;
+        }
+        .btn-submit:hover { background: var(--primary-dark); }
+        
+        /* Analysis Processing Simulation Screen */
+        #ai-processing {
+            display: none;
+            text-align: center;
+            padding: 30px 10px;
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .process-step {
+            font-size: 15px;
+            color: #555;
+            margin: 8px 0;
+            font-weight: 500;
+        }
+        
+        /* Result Layout Styles */
+        #ai-result-section {
+            display: none;
+        }
+        .recommendation-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px dashed #e0e0e0;
+            padding-bottom: 12px;
+            margin-bottom: 15px;
+        }
+        .forecast-box {
+            background: #f9fbe7;
+            border-left: 5px solid #afb42b;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 6px;
+        }
+        .financial-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 15px 0;
+            text-align: center;
+        }
+        .fin-box { padding: 10px; border-radius: 8px; }
+        
+        /* Chart Container */
+        .chart-container {
+            position: relative;
+            margin: 20px 0;
+            height: 220px;
+            width: 100%;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #eeeeee;
+        }
+        th { background-color: #f1f8e9; color: var(--primary-dark); }
+        
+        .footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 12px;
+            color: #777777;
+            border-top: 1px solid #e0e0e0;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🌾 કૃષિમિત્ર AI</h1>
+        <span style="font-size: 11px; background: rgba(255,255,255,0.2); padding: 4px 8px; border-radius: 4px;">SCIENCE MELA • PROTOTYPE</span>
+    </header>
+
+    <div class="container">
+        
+        <!-- Offline Warning Emulation for Science Mela -->
+        <div class="offline-tag">
+            📡 ઇન્ટરનેટ કનેક્શન નથી. સેલ્ફ-કન્ટેઇન્ડ ઓફલાઇન મોડ સક્રિય છે.
+        </div>
+
+        <!-- Hero Section -->
+        <div class="hero">
+            <h2>સાચો પાક, સાચો સમય, સારું વળતર 🌱</h2>
+            <p>સરકારી ડેટા (e-NAM), સેટેલાઇટ મોનિટરિંગ અને વૈશ્વિક બજાર ટ્રેન્ડ્સનું આર્ટિફિશિયલ ઇન્ટેલિજન્સ દ્વારા વિશ્લેષણ કરી આગામી ૪ મહિના પછીના ભાવોની સચોટ આગાહી.</p>
+        </div>
+
+        <!-- Fast Status Cards -->
+        <div class="dashboard-grid">
+            <div class="dash-card">
+                <div style="font-size: 13px; color: #666;">હવામાન સ્થિતિ</div>
+                <div class="value">૩૧°C | ખરીફ</div>
+            </div>
+            <div class="dash-card">
+                <div style="font-size: 13px; color: #666;">ગ્લોબલ માર્કેટ સ્કોર</div>
+                <div class="value" style="color: #2e7d32;">ઉપર ↗ (તેજી)</div>
+            </div>
+        </div>
+
+        <!-- Input Selection Card -->
+        <div class="card" id="input-card">
+            <h2>👨‍🌾 તમારા ખેતરની માહિતી પસંદ કરો</h2>
+            
+            <!-- District Selector -->
+            <div class="form-group">
+                <label for="district">જિલ્લો પસંદ કરો:</label>
+                <select id="district">
+                    <option value="મહીસાગર" selected>મહીસાગર (Mahisagar)</option>
+                    <option value="અમદાવાદ">અમદાવાદ (Ahmedabad)</option>
+                    <option value="અમરેલી">અમરેલી (Amreli)</option>
+                    <option value="આણંદ">આણંદ (Anand)</option>
+                    <option value="અરવલ્લી">અરવલ્લી (Aravalli)</option>
+                    <option value="બનાસકાંઠા">બનાસકાંઠા (Banaskantha)</option>
+                    <option value="ભરૂચ">ભરૂચ (Bharuch)</option>
+                    <option value="ભાવનગર">ભાવનગર (Bhavnagar)</option>
+                    <option value="બોટાદ">બોટાદ (Botad)</option>
+                    <option value="છોટાઉદેપુર">છોટાઉદેપુર (Chhota Udepur)</option>
+                    <option value="દાહોદ">દાહોદ (Dahod)</option>
+                    <option value="ડાંગ">ડાંગ (Dang)</option>
+                    <option value="દેવભૂમિ દ્વારકા">દેવભૂમિ દ્વારકા (Devbhumi Dwarka)</option>
+                    <option value="ગાંધીનગર">ગાંધીનગર (Gandhinagar)</option>
+                    <option value="ગીર સોમનાથ">ગીર સોમનાથ (Gir Somnath)</option>
+                    <option value="જામનગર">જામનગર (Jamnagar)</option>
+                    <option value="જૂનાગઢ">જૂનાગઢ (Junagadh)</option>
+                    <option value="કચ્છ">કચ્છ (Kutch)</option>
+                    <option value="ખેડા">ખેડા (Kheda)</option>
+                    <option value="મોરબી">મોરબી (Morbi)</option>
+                    <option value="નર્મદા">નર્મદા (Narmada)</option>
+                    <option value="નવસારી">નવસારી (Navsari)</option>
+                    <option value="પંચમહાલ">પંચમહાલ (Panchmahal)</option>
+                    <option value="પાટણ">પાટણ (Patan)</option>
+                    <option value="પોરબંદર">પોરબંદર (Porbandar)</option>
+                    <option value="રાજકોટ">રાજકોટ (Rajkot)</option>
+                    <option value="સાબરકાંઠા">સાબરકાંઠા (Sabarkantha)</option>
+                    <option value="સુરત">સુરત (Surat)</option>
+                    <option value="સુરેન્દ્રનગર">સુરેન્દ્રનગર (Surendranagar)</option>
+                    <option value="તાપી">તાપી (Tapi)</option>
+                    <option value="વડોદરા">વડોદરા (Vadodara)</option>
+                    <option value="વલસાડ">વલસાડ (Valsad)</option>
+                </select>
+            </div>
+
+            <!-- Soil Type Selection Buttons Grid -->
+            <div class="form-group">
+                <label>જમીનનો પ્રકાર:</label>
+                <div class="radio-group" id="soil-group">
+                    <div class="radio-btn active" onclick="selectOption('soil', this, 'કાળી')">કાળી જમીન</div>
+                    <div class="radio-btn" onclick="selectOption('soil', this, 'ગોરાડુ')">ગોરાડુ / કાંપવાળી</div>
+                    <div class="radio-btn" onclick="selectOption('soil', this, 'રેતાળ')">રેતાળ જમીન</div>
+                    <div class="radio-btn" onclick="selectOption('soil', this, 'મિશ્ર')">મિશ્ર જમીન</div>
+                </div>
+            </div>
+
+            <!-- Irrigation Availability -->
+            <div class="form-group">
+                <label>સિંચાઈની સુવિધા:</label>
+                <div class="radio-group" id="water-group">
+                    <div class="radio-btn active" onclick="selectOption('water', this, 'પૂરતી')">પૂરતી વ્યવસ્થા</div>
+                    <div class="radio-btn" onclick="selectOption('water', this, 'મધ્યમ')">મધ્યમ (બોર/કુવો)</div>
+                    <div class="radio-btn" onclick="selectOption('water', this, 'મર્યાદિત')">મર્યાદિત (વરસાદ આધારિત)</div>
+                </div>
+            </div>
+
+            <!-- Crop Season Selector -->
+            <div class="form-group">
+                <label>વાવણીની ઋતુ:</label>
+                <div class="radio-group" id="season-group">
+                    <div class="radio-btn active" onclick="selectOption('season', this, 'ખરીફ')">ખરીફ (ચોમાસું)</div>
+                    <div class="radio-btn" onclick="selectOption('season', this, 'રવિ')">રવિ (શિયાળુ)</div>
+                </div>
+            </div>
+
+            <button class="btn-submit" onclick="runAIAnalysis()">🤖 AI Analysis શરૂ કરો</button>
+        </div>
+
+        <!-- 🔄 Live Analysis Loader Simulation Card -->
+        <div class="card" id="ai-processing">
+            <div class="spinner"></div>
+            <h3 style="color: var(--primary); margin-bottom: 15px;">કૃષિમિત્ર AI એન્જિન ગણતરી કરી રહ્યું છે...</h3>
+            <div id="step-1" class="process-step" style="opacity: 0.3;">📂 સરકારી મંડી એપીઆઈ (e-NAM) ડેટા સ્કેનિંગ...</div>
+            <div id="step-2" class="process-step" style="opacity: 0.3;">📡 સેટેલાઇટ રિમોટ સેન્સિંગ વાવેતર વિસ્તાર ગણતરી...</div>
+            <div id="step-3" class="process-step" style="opacity: 0.3;">🌐 આંતરરાષ્ટ્રીય વૈશ્વિક સપ્લાય ટ્રેન્ડ મેપિંગ...</div>
+        </div>
+
+        <!-- 📊 Results and Charts Section Layout -->
+        <div id="ai-result-section">
+            
+            <!-- Main Prediction Card -->
+            <div class="card">
+                <div class="recommendation-header">
+                    <span id="res-crop-title" style="font-size: 22px; font-weight: bold; color: var(--text-dark);">🥜 મગફળી (Groundnut)</span>
+                    <span id="res-ai-score" style="background: #e8f5e9; color: var(--primary); padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 14px;">AI Score: 89/100</span>
+                </div>
+
+                <!-- 4-Month Forecast Feature -->
+                <div class="forecast-box">
+                    <h4 style="margin: 0 0 5px 0; color: #558b2f; font-size: 15px;">🔮 ૪ મહિના પછીના ભાવોની આગાહી (Price Forecast)</h4>
+                    <p id="res-price-range" style="margin: 5px 0; font-size: 19px; font-weight: bold; color: #33691e;">અંદાજિત બજાર ભાવ: ₹૭,૨૦૦ થી ₹૭,૫૦૦ / મણ</p>
+                    <small id="res-explanation" style="color: #555; display: block; margin-top: 6px; line-height: 1.4;">
+                        🌐 <b>વિશ્લેષણ:</b> સેટેલાઇટ ડેટા ચાલુ વર્ષે ઓછું વાવેતર દર્શાવે છે અને વૈશ્વિક બજારમાં ચીન તરફથી કપાસ/તેલીબિયાંની મજબૂત આંતરરાષ્ટ્રીય માંગના લીધે આગામી ૪ મહિનામાં રેકોર્ડ તેજી જોવા મળી શકે છે.
+                    </small>
+                </div>
+
+                <!-- Cost / Benefit Breakdown Grid -->
+                <div class="financial-grid">
+                    <div class="fin-box" style="background: #e3f2fd;">
+                        <span style="font-size: 11px; color: #1565c0; display:block;">અંદાજિત આવક</span>
+                        <span id="res-income" style="font-size: 16px; font-weight: bold; color: #0d47a1;">₹૩૨,૦૦૦</span>
+                    </div>
+                    <div class="fin-box" style="background: #ffebee;">
+                        <span style="font-size: 11px; color: #c62828; display:block;">અંદાજિત ખર્ચ</span>
+                        <span id="res-cost" style="font-size: 16px; font-weight: bold; color: #b71c1c;">₹૧૮,૦૦૦</span>
+                    </div>
+                    <div class="fin-box" style="background: #e8f5e9;">
+                        <span style="font-size: 11px; color: #2e7d32; display:block;">ચોખ્ખો નફો</span>
+                        <span id="res-profit" style="font-size: 16px; font-weight: bold; color: #1b5e20;">₹૧૪,૦૦૦</span>
+                    </div>
+                </div>
+
+                <div style="margin-top: 15px; font-size: 13.5px; background: #f5f5f5; padding: 12px; border-radius: 8px; line-height: 1.4; border-left: 4px solid var(--primary);">
+                    💡 <b>ખેડૂત માટે માર્ગદર્શન સલાહ:</b> ૪ મહિના પછી ટ્રેન્ડ સતત મજબૂત થતો હોવાથી પાક તૈયાર થતા જ વહેંચવાની ઉતાવળ કરવાના બદલે ૧ મહિનો હોલ્ડ કરવાથી મહત્તમ વળતર કમાઈ શકાશે.
+                </div>
+            </div>
+
+            <!-- Dynamic Chart Display Card -->
+            <div class="card">
+                <h2>📈 ૪ મહિનાના બજાર ભાવનો ટ્રેન્ડ (સરળ ગ્રાફ)</h2>
+                <p style="font-size: 13px; color: #555; margin-top: -8px; margin-bottom: 15px;">નીચેનો આલેખ દર્શાવે છે કે આગામી ૪ મહિનામાં કિંમતો કઈ દિશામાં આગળ વધી શકે છે:</p>
+                
+                <div class="chart-container">
+                    <canvas id="predictionChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Market Competitors and Scores Table -->
+            <div class="card">
+                <h2>💰 અન્ય વૈકલ્પિક પાકોનું વિશ્લેષણ સપ્લાય સ્કોર</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>પાકનું નામ</th>
+                            <th>ભાવ ટ્રેન્ડ</th>
+                            <th>વૈશ્વિક ડિમાન્ડ</th>
+                            <th>AI Score</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <!-- Filled dynamically -->
+                    </tbody>
+                </table>
+            </div>
+
+            <button class="btn-submit" style="background: #555;" onclick="resetForm()">🔄 ફરીથી ચકાસો / પાછા જાઓ</button>
+        </div>
+
+        <div class="footer">
+            🌾 કૃષિમિત્ર AI • વિજ્ઞાન મેળો પ્રોટોટાઇપ<br>
+            આ ડેટા મોડલિંગ સાયન્સ ફેર પ્રદર્શન હેતુ માટે સેટેલાઇટ અને સરકારી પેરામીટર્સનું અનુકરણ (Simulation) કરે છે.
+        </div>
+
+    </div>
+
+    <script>
+        // Form selections data tracker
+        let selections = {
+            soil: 'કાળી',
+            water: 'પૂરતી',
+            season: 'ખરીફ'
+        };
+
+        // Reference holder to destroy charts correctly on recalculation
+        let currentChart = null;
+
+        function selectOption(category, element, value) {
+            // Remove active class from brothers
+            const parent = element.parentElement;
+            const buttons = parent.querySelectorAll('.radio-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            // Add active to current
+            element.classList.add('active');
+            selections[category] = value;
+        }
+
+        function runAIAnalysis() {
+            // Hide previous inputs, show animated spinner steps
+            document.getElementById('input-card').style.display = 'none';
+            document.getElementById('ai-processing').style.display = 'block';
+            document.getElementById('ai-result-section').style.display = 'none';
+
+            // Simulate AI multi-source calculation sequencing
+            setTimeout(() => { document.getElementById('step-1').style.opacity = "1"; }, 500);
+            setTimeout(() => { document.getElementById('step-2').style.opacity = "1"; }, 1100);
+            setTimeout(() => { document.getElementById('step-3').style.opacity = "1"; }, 1700);
+
+            setTimeout(() => {
+                displayAIResults();
+            }, 2500);
+        }
+
+        function displayAIResults() {
+            document.getElementById('ai-processing').style.display = 'none';
+            document.getElementById('ai-result-section').style.display = 'block';
+
+            const district = document.getElementById('district').value;
+            
+            // Output Content variables
+            let cropTitle = "";
+            let aiScore = "";
+            let priceRange = "";
+            let explanation = "";
+            let income = "";
+            let cost = "";
+            let profit = "";
+            
+            // Dynamic chart numbers arrays based on inputs
+            let chartLabels = [];
+            let chartDataValues = [];
+            let tableHTML = "";
+
+            // Dynamic logic modeling according to selection rules for Science mela presentation
+            if (selections.season === 'ખરીફ') {
+                if (selections.soil === 'કાળી' || selections.soil === 'ગોરાડુ') {
+                    // Best case for Groundnut or Cotton
+                    cropTitle = "🥜 મગફળી (Groundnut) - " + district;
+                    aiScore = "AI Score: 92/100";
+                    priceRange = "અંદાજિત બજાર ભાવ: ₹૭,૪૦૦ થી ₹૭,૮૦૦ / મણ";
+                    explanation = "🌐 <b>સેટેલાઇટ અને વૈશ્વિક વિશ્લેષણ:</b> " + district + " ની ફળદ્રુપ જમીન ડેટા સાથે મેપ થઈ છે. સેટેલાઇટ ઇમેજરી મુજબ પડોશી રાજ્યોમાં વાવેતર આ વર્ષે ૧૫% ઓછું થયું છે, વળી વૈશ્વિક ખાદ્યતેલ બજારમાં તીવ્ર અછત સર્જાવાને લીધે આગામી ૪ મહિનામાં મગફળીના ભાવો આસમાને પહોંચી શકે છે.";
+                    income = "₹૩૮,૦૦૦";
+                    cost = "₹૧૪,૦૦૦";
+                    profit = "₹૨૪,૦૦૦";
+
+                    chartLabels = ['વર્તમાન ભાવ', '૧ મહિનો', '૨ મહિના', '૩ મહિના', '૪ મહિના (આગાહી)'];
+                    chartDataValues = [6200, 6450, 6800, 7100, 7500];
+
+                    tableHTML = `
+                        <tr><td>🌱 કપાસ</td><td>↗ વધતો</td><td>ઊંચી</td><td><b style="color:green;">84/100</b></td></tr>
+                        <tr><td>🌿 તલ</td><td>→ સ્થિર</td><td>મધ્યમ</td><td>76/100</td></tr>
+                        <tr><td>🌾 બાજરી</td><td>↘ ઘટતો</td><td>ઓછી</td><td>58/100</td></tr>
+                    `;
+                } else {
+                    // Sandy / Mixed soil in Monsoon
+                    cropTitle = "🌱 કપાસ (Cotton) - " + district;
+                    aiScore = "AI Score: 85/100";
+                    priceRange = "અંદાજિત બજાર ભાવ: ₹૬,૮૦૦ થી ₹૭,૨૦૦ / મણ";
+                    explanation = "🌐 <b>ગ્લોબલ ટ્રેન્ડ વિશ્લેષણ:</b> આંતરરાષ્ટ્રીય કાપડ મિલો તરફથી કપાસ ફાઈબરની વૈશ્વિક ડિમાન્ડ ઇન્ડેક્સ વધ્યો છે. સરકારી બફર સ્ટોક ઓછો હોવાના કારણે માર્કેટ પ્રાઇસ ઇન્ડેક્સ ૪ મહિના પછી તેજી તરફ ઇશારો કરે છે.";
+                    income = "₹૩૧,૦૦૦";
+                    cost = "₹૧૩,૦૦૦";
+                    profit = "₹૧૮,૦૦૦";
+
+                    chartLabels = ['વર્તમાન ભાવ', '૧ મહિનો', '૨ મહિના', '૩ મહિના', '૪ મહિના (આગાહી)'];
+                    chartDataValues = [5900, 6100, 6400, 6650, 7000];
+
+                    tableHTML = `
+                        <tr><td>🥜 મગફળી</td><td>→ સ્થિર</td><td>મધ્યમ</td><td>74/100</td></tr>
+                        <tr><td>🌾 બાજરી</td><td>↗ વધતો</td><td>મધ્યમ</td><td>71/100</td></tr>
+                        <tr><td>🌿 તલ</td><td>↘ ઘટતો</td><td>ઓછી</td><td>60/100</td></tr>
+                    `;
+                }
+            } else {
+                // Rabi (Winter Season) Recommendation Logic simulation
+                cropTitle = "🌾 ઘઉં (Premium Wheat) - " + district;
+                aiScore = "AI Score: 90/100";
+                priceRange = "અંદાજિત બજાર ભાવ: ₹૨,૮૦૦ થી ₹૩,૨૦૦ / ક્વિન્ટલ";
+                explanation = "🌐 <b>ગવર્મેન્ટ અને સેટેલાઇટ એનાલિસિસ:</b> રશિયા-યુક્રેન નિકાસ નીતિ અને સરકારી ઓપન માર્કેટ સેલ સ્કીમ (OMSS) ના ડેટાનું સંયોજન કરતા જાણી શકાય છે કે આગામી માર્ચ-એપ્રિલ સુધીમાં ઘઉંની આંતરરાષ્ટ્રીય તંગીના કારણે સ્થાનિક મંડીઓમાં ભાવ મજબૂત રહેશે.";
+                income = "₹૨૬,૦૦૦";
+                cost = "₹૧૦,૦૦૦";
+                profit = "₹૧૬,૦૦૦";
+
+                chartLabels = ['વર્તમાન ભાવ', '૧ મહિનો', '૨ મહિના', '૩ મહિના', '૪ મહિના (આગાહી)'];
+                chartDataValues = [2300, 2450, 2600, 2850, 3000];
+
+                tableHTML = `
+                    <tr><td>🌱 ચણા</td><td>↗ વધતો</td><td>ઊંચી</td><td><b style="color:green;">82/100</b></td></tr>
+                    <tr><td>🌿 રાયડો (સરસવ)</td><td>→ સ્થિર</td><td>મધ્યમ</td><td>75/100</td></tr>
+                    <tr><td>🧅 ડુંગળી</td><td>↘ અસ્થિર</td><td>મધ્યમ</td><td>52/100</td></tr>
+                `;
+            }
+
+            // Write HTML updates
+            document.getElementById('res-crop-title').innerHTML = cropTitle;
+            document.getElementById('res-ai-score').innerHTML = aiScore;
+            document.getElementById('res-price-range').innerHTML = priceRange;
+            document.getElementById('res-explanation').innerHTML = explanation;
+            document.getElementById('res-income').innerHTML = income;
+            document.getElementById('res-cost').innerHTML = cost;
+            document.getElementById('res-profit').innerHTML = profit;
+            document.getElementById('table-body').innerHTML = tableHTML;
+
+            // Render Chart.js line graph layout seamlessly
+            buildPredictionChart(chartLabels, chartDataValues);
+        }
+
+        function buildPredictionChart(labels, dataValues) {
+            const ctx = document.getElementById('predictionChart').getContext('2d');
+            
+            // Clean up old instance to prevent overlay bugs during repeated clicks
+            if (currentChart) {
+                currentChart.destroy();
+            }
+
+            currentChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'અંદાજિત કિંમત (₹)',
+                        data: dataValues,
+                        borderColor: '#087f23',
+                        backgroundColor: 'rgba(8, 127, 35, 0.1)',
+                        borderWidth: 3,
+                        pointBackgroundColor: '#087f23',
+                        pointRadius: 6,
+                        pointHoverRadius: 8,
+                        fill: true,
+                        tension: 0.3 // Curvature for clean visual flow
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false } // Simplifies look for rural users
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            grid: { color: '#eef2ee' },
+                            ticks: { font: { family: 'inherit', size: 12 } }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { family: 'inherit', size: 12, weight: 'bold' } }
+                        }
+                    }
+                }
+            });
+        }
+
+        function resetForm() {
+            // Restore step visibility states
+            document.getElementById('input-card').style.display = 'block';
+            document.getElementById('ai-result-section').style.display = 'none';
+            
+            // Reset spinner opacities
+            document.getElementById('step-1').style.opacity = "0.3";
+            document.getElementById('step-2').style.opacity = "0.3";
+            document.getElementById('step-3').style.opacity = "0.3";
+        }
+    </script>
+</body>
+</html>
